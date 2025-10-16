@@ -1,0 +1,162 @@
+{
+  "name": "RAG RAPPI",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        16
+      ],
+      "id": "a29cd29e-0a8a-499c-8305-e2210346e7ff",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PMlewvMSiMr4JhIa",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        224
+      ],
+      "id": "e254b245-d592-4fde-b5af-9a7986378ce1",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "IIARg3cgltwho7ki",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        48,
+        240
+      ],
+      "id": "465b9cf2-f565-4df6-b5a8-ed936b3c4a4b",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        48,
+        400
+      ],
+      "id": "a0f8606b-7ad0-445c-a1bd-1f1d88c07fce",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1PsLiQeUSD9yV66u_LyuHpGl-bAlJ6qkt-m8NcG3dgQQ",
+          "mode": "list",
+          "cachedResultName": "RAPPI RAG",
+          "cachedResultUrl": "https://docs.google.com/document/d/1PsLiQeUSD9yV66u_LyuHpGl-bAlJ6qkt-m8NcG3dgQQ/edit?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        16
+      ],
+      "id": "800387f9-6599-484e-9a12-c73d5578e1da",
+      "name": "RAG RAPPI",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "HQAtRqiUUr3IEUDG",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG RAPPI": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d47cc714-e324-404c-b8d9-8da6751adabb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "076d77bb42b1af4b975afb83adf23c8cb04df51e624a65bb3cb076df9694303c"
+  },
+  "id": "lFGl2NUwWYS376LV",
+  "tags": []
+}

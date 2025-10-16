@@ -1,0 +1,156 @@
+{
+  "name": "Consulta de  Ordenes",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "Consulta de  Ordenes",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        272,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=🧠 Definición:Eres un generador experto de consultas SQL especializado en análisis de datos empresariales.\n\nTu objetivo es transformar requerimientos escritos en lenguaje natural en consultas SQL SELECT claras, correctas y optimizadas. Las consultas se basan en la tabla RAW_ORDERS, que contiene las ordenes semanales relacionadas con el contexto Lead Penetration de la empresa Rappi.\n\nDebes interpretar correctamente los parámetros,  filtros mencionados en el requerimiento, asegurándote de cumplir estrictamente con el formato, nombres de columnas y reglas de sintaxis solicitadas.\n\n🎯 Objetivo:\nTu objetivo es generar una consulta SQL (SELECT) basada en los requerimientos especificados en la siguiente entrada:{{$json.query}}\n\n📊 Contexto de la tabla:\nLa consulta debe obtener datos de la tabla RAW_ORDERS, relacionada con las ordenes de Lead Penetration (no es una métrica, sino el contexto general) de la empresa Rappi.\n\nLa tabla contiene los siguientes campos disponibles:\nCOUNTRY, CITY, ZONE, METRIC, L8W, L7W, L6W, L5W, L4W, L3W, L2W, L1W, L0W.\n\n📈 Métricas habilitadas (columna METRIC):\nSolo se deben utilizar la siguiente métrica disponible:\n\"Orders\"\n⚙️ Instrucciones para la generación del SQL: \nDevuelve únicamente el código SQL, sin explicaciones ni comentarios.\n\nUtiliza cláusulas WHERE, GROUP BY o ORDER BY según el requerimiento.\n\nUsa exactamente los nombres de columnas y tablas indicados, respetando mayúsculas y minúsculas.\\n4. No agregues comillas a los nombres de columnas ni tablas.\n\nAgrega comillas simples (' ') a todos los valores literales o parámetros (por ejemplo: WHERE METRIC = 'Restaurants Markdowns / GMV' AND COUNTRY = 'CO').\n\nMantén un formato SQL estándar, claro y  en una sola linea.\n\nSi el requerimiento menciona semanas o períodos, asócialos con las columnas L8W a L0W\n\n Si se requiere un cálculo o promedio, usa funciones agregadas como AVG(), SUM() o COUNT() según corresponda.\n\nLa salida final debe generarse en una sola línea de texto (sin saltos de línea ni comentarios).\n\n📘 Esquema de la tabla:\nCOUNTRY : Código de país (AR, BR, CL, CO, CR, EC, MX, PE, UY)\nCITY : Nombre de la ciudad: \nZONE : Zona operacional o barrio\n\n\nMETRIC: Nombre de la métrica medida osea \"Orders\"\n\nL8W a L0W : Valor de la métrica en cada una de las últimas 8 semanas (L8W = hace 8 semanas, L0W = semana actual)\n\nSi la consulta conlleva a que se consulte gran cantidad de datos limita la respuesta a un maximo de 100 registros para sacar la muestra",
+        "batching": {
+          "delayBetweenBatches": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        560,
+        336
+      ],
+      "id": "759a0fd5-d772-49a7-9bc6-d59df4783c00",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        496,
+        544
+      ],
+      "id": "dd7d768e-92f4-45c2-bd9b-a17daee2d9e2",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "IIARg3cgltwho7ki",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.cleaned_sql }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1152,
+        336
+      ],
+      "id": "492ad337-2951-4082-afbc-3949183bde20",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "7v5xtPyF9STPoGjh",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// === CONFIGURACIÓN ===\n// Lista de columnas exactas según tu tabla:\nconst columns = [\n  \"COUNTRY\", \"CITY\", \"ZONE\", \"METRIC\",\n  \"L8W\", \"L7W\", \"L6W\", \"L5W\", \"L4W\", \"L3W\", \"L2W\", \"L1W\", \"L0W\"\n];\n\n// Nombre de la tabla (usa mayúsculas y comillas dobles)\nconst tableName = \"RAW_ORDERS\";\n\n// === OBTENER SQL DEL NODO ANTERIOR ===\nlet sql = $input.first().json.text\n\n// === LIMPIEZA GENERAL ===\nsql = sql.replace(/\\r?\\n/g, \" \").replace(/\\s+/g, \" \").replace(/;$/, \"\").trim();\n\n// === CORREGIR TABLA ===\nsql = sql.replace(/\\bRAW_ORDERS\\b/gi, `\"${tableName.toUpperCase()}\"`);\n\n// === CORREGIR COLUMNAS (solo estas, no literales) ===\n// 1️⃣ Guardamos los literales entre comillas simples para no tocarlos\nlet literals = [];\nsql = sql.replace(/'([^']*)'/g, (m) => {\n  literals.push(m);\n  return `__LIT${literals.length - 1}__`;\n});\n\n// 2️⃣ Reemplazamos columnas solo si son nombres de columna válidos\nfor (const col of columns) {\n  const regex = new RegExp(`\\\\b${col}\\\\b`, \"gi\");\n  sql = sql.replace(regex, `\"${col.toUpperCase()}\"`);\n}\n\n// 3️⃣ Restauramos literales\nsql = sql.replace(/__LIT(\\d+)__/g, (_, i) => literals[+i]);\n\n// === CORREGIR errores comunes de HAVING o subconsultas ===\nsql = sql.replace(/\\)\\s*\\(\\s*SELECT/gi, \") = (SELECT\");\nsql = sql.replace(/\\/\\s*9\\s*\\(\\s*SELECT/gi, \"/9 = (SELECT\");\n\n// === NORMALIZAR ESPACIOS FINALES ===\nsql = sql.replace(/\\s+/g, \" \").trim();\n\n// === RETORNO ===\nreturn [{ cleaned_sql: sql }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        336
+      ],
+      "id": "a2ba40e2-54c9-4750-855a-cf07d97228be",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Consulta de  Ordenes": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "36f05115-3d93-491e-a133-edb2ebd659f4",
+  "meta": {
+    "instanceId": "076d77bb42b1af4b975afb83adf23c8cb04df51e624a65bb3cb076df9694303c"
+  },
+  "id": "4vdcEQRBqkoENgEN",
+  "tags": []
+}

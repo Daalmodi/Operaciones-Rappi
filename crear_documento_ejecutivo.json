@@ -1,0 +1,182 @@
+{
+  "name": "Reporte ejecutivo",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "report_info"
+            }
+          ]
+        }
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "Reporte ejecutivo",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        272,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "text": "=Generador de reporte en formato Markdown con  esta información {{ $json.report_info }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "report",
+              "description": "Texto plano en formato Markdown"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        352
+      ],
+      "id": "338fa61c-adeb-4cb0-a7cb-bcd325353bcd",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        528
+      ],
+      "id": "21e9e289-cbe5-4cdf-8135-e00b60a1ac44",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "IIARg3cgltwho7ki",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "dalejandromoya@ucundinamarca.edu.co",
+        "subject": "=Report: {{ $today.format('yyyy-MM-dd') }}",
+        "message": "={{ $json.report }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1088,
+        352
+      ],
+      "id": "7f81f986-c262-4ab1-a34a-9532b0c6b862",
+      "name": "Send a message",
+      "webhookId": "ff46aaf7-c08a-4b64-b4e3-f2ffc3cd523e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "aGdREnihS8SrqUHn",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.output.report }}",
+        "destinationKey": "report",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        848,
+        352
+      ],
+      "id": "6d6658f5-9d93-418f-8fb7-6d5ec8d48766",
+      "name": "Markdown"
+    }
+  ],
+  "pinData": {
+    "Reporte ejecutivo": [
+      {
+        "json": {
+          "report_info": "First item"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Reporte ejecutivo": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aa503712-74f9-4d19-af3e-b7ca78aacbff",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "076d77bb42b1af4b975afb83adf23c8cb04df51e624a65bb3cb076df9694303c"
+  },
+  "id": "fAWZzZ61oPciBz0o",
+  "tags": []
+}

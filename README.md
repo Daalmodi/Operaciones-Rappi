@@ -29,7 +29,7 @@ Permite consultar las **métricas de entrada** relacionadas con el desempeño de
 ### 📦 `consulta_ordenes`
 Recupera los **datos de órdenes** de Rappi que impactan o están vinculados con las métricas de Lead Penetration.
 
-### 📚 `consulta_contexto`
+### 📚 `CONTEXTO`
 Se utiliza para obtener el **significado o definición técnica** de una métrica, o entender el **contexto operativo** de conceptos usados por Rappi.  
 > Ejemplo: Si el usuario pregunta “¿qué significa *Pro Adoption*?” o “¿cuál es el contexto de *Lead Penetration*?”, esta es la herramienta adecuada.
 
@@ -91,7 +91,36 @@ El asistente debe mantener un estilo de comunicación:
 - **Claro y técnico**, pero accesible para usuarios sin conocimientos avanzados en análisis de datos.
 - Basado siempre en **tendencias y datos observables**.
 - Capaz de **solicitar información adicional** cuando los datos disponibles sean insuficientes.
-- Cuando el usuario solicite **definiciones, contexto o interpretación de métricas o conceptos de Rappi**, debe usar la herramienta **`consulta_contexto`**.
+- Cuando el usuario solicite **definiciones, contexto o interpretación de métricas o conceptos de Rappi**, debe usar la herramienta **`CONTEXTO`**.
+
+---
+### ⚙️ Instrucciones de Importación y Configuración
+
+1. **Importación de Workflows**
+   - Crea o importa los siguientes workflows:
+     - 🧮 `consulta_metricas`
+     - 📦 `consulta_ordenes`
+     - 📊 `crear_documento_ejecutivo`
+   - Verifica que **cada herramienta (tool)** esté correctamente vinculada al **workflow correspondiente**.
+
+2. **Habilitación de Credenciales**
+   - Asegúrate de tener activas y configuradas las siguientes credenciales:
+     - 🔑 `ChatGPT`
+     - 🗄️ `Supabase`
+     - 📧 `Gmail`
+     - 🧠 `Redis`
+     - 🐘 `PostgreSQL`
+
+3. **Configuración de la Base de Datos**
+   - Importa en PostgreSQL las siguientes tablas:
+     - `"RAW_INPUT_METRICS"`
+     - `"RAW_ORDERS"`
+   - Verifica que ambas estén **vinculadas correctamente al entorno del asistente** y que las consultas SQL puedan acceder a sus columnas y datos sin errores de relación ni permisos.
+
+4. **Vectorización en Supabase**
+   - Es **fundamental vectorizar la información** en Supabase (por ejemplo, descripciones, métricas o campos de texto relevantes) para que el asistente pueda **reconocer, contextualizar y relacionar datos correctamente** durante el análisis.
+   - Asegúrate de que las tablas vectorizadas estén **sincronizadas con el esquema actual** y que los embeddings se actualicen cuando cambie la información base.
+   -He creado un workflow para vectorizar la información relevante el cual es "RAG-RAPPI",es necesario usar Google drive para traer el archivo.
 
 ---
 
@@ -103,8 +132,10 @@ Usuario
    ├──> Asistente de Lead Penetration
    │         ├──> consulta_metricas → Métricas operativas (PostgreSQL)
    │         ├──> consulta_ordenes → Órdenes históricas de Rappi
-   │         ├──> consulta_contexto → Significados y definiciones
+   │         ├──> CONTEXTO → Significados y definiciones
    │         ├──> calculator → Cálculos rápidos y comparaciones
    │         └──> crear_documento_ejecutivo → Reportes ejecutivos de alto nivel
    │
    └──> Respuesta: Insights + Análisis + Recomendaciones
+
+

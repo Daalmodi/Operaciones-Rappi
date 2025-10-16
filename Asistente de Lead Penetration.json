@@ -1,0 +1,690 @@
+{
+  "name": "Rappi workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('user_data').item.json.sessionId }}",
+        "tableName": "rappi_messagges",
+        "contextWindowLength": 20
+      },
+      "id": "24c0f8c2-156f-43db-8f55-02a308ec3bde",
+      "name": "Postgres Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "position": [
+        816,
+        416
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "postgres": {
+          "id": "7v5xtPyF9STPoGjh",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $('user_data').item.json.sessionId }}"
+      },
+      "id": "3a011cb3-213d-4c35-9bbc-bd21988b315b",
+      "name": "Delete_buffer",
+      "type": "n8n-nodes-base.redis",
+      "position": [
+        48,
+        224
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "redis": {
+          "id": "HxZP0boxewsRgXaZ",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "62646545-4f25-4341-b306-4f00c50b8153",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "amount": 7
+      },
+      "id": "0c4e99af-5ad4-4a66-81d8-50eec653fdaa",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        -192,
+        512
+      ],
+      "webhookId": "4adde71a-d84b-4ad7-9f39-ec225c3bde1f",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "537b3690-0cc1-4cab-ac2b-db957fd1dc77",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    },
+                    "leftValue": "={{JSON.parse($json.message.last()).chatId}}",
+                    "rightValue": "={{ $('When chat message received').item.json.sessionId }}"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ignorar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "f39706ed-8e3c-4dc7-ab6b-6cfee09d6ffb",
+                    "operator": {
+                      "type": "dateTime",
+                      "operation": "before"
+                    },
+                    "leftValue": "={{ JSON.parse( $json.message.last() ).data_time }}",
+                    "rightValue": "={{ $now.minus(7,'seconds').toLocal() }}"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Continuar"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Esperar"
+        }
+      },
+      "id": "34a1c6b4-3114-4448-9db2-b56845f24dfa",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        -224,
+        192
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "message",
+        "key": "={{ $('user_data').item.json.sessionId }}",
+        "options": {}
+      },
+      "id": "03c81a00-ff9f-4587-90fd-a291a7c123e0",
+      "name": "Get_buffer_data",
+      "type": "n8n-nodes-base.redis",
+      "position": [
+        -464,
+        192
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "redis": {
+          "id": "HxZP0boxewsRgXaZ",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $json.sessionId }}",
+        "messageData": "={{ JSON.stringify(\n{\n  \"message\": $json.message,\n  \"chatId\":  $json.sessionId,\n  \"data_time\": $now \n}\n) }}\n\n",
+        "tail": true
+      },
+      "id": "ef11a4d0-f619-4b5b-abf4-9fe695ed97b3",
+      "name": "Buffer",
+      "type": "n8n-nodes-base.redis",
+      "position": [
+        -704,
+        192
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "redis": {
+          "id": "HxZP0boxewsRgXaZ",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "92e943fb-c8af-487d-a2c0-1feddb3e3deb",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "position": [
+        1584,
+        544
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "IIARg3cgltwho7ki",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.concat_message }}",
+        "options": {
+          "systemMessage": "=Eres un asistente experto en Lead Penetration diseñado para apoyar a los colaboradores de Rappi. Posees un conocimiento profundo sobre las métricas operativas, el contexto de negocio y las dinámicas de las zonas en los diferentes países donde opera Rappi.\n\n🎯 Objetivo\n\nTu propósito es analizar y facilitar el acceso a datos de Lead Penetration, brindando respuestas comprensibles y acciones estratégicas basadas en datos para usuarios no técnicos.\nDebes ofrecer insights accionables con un enfoque analítico, claro y orientado al impacto operativo.\n\n🧩 Herramientas disponibles\n\n🧮 consulta_metricas\nUtilízala para consultar las métricas de entrada relacionadas con Lead Penetration.\n\n📦 consulta_ordenes\nUtilízala para consultar los datos de órdenes de Rappi relacionados con Lead Penetration.\n\n📚 CONTEXTO\nUtilízala cuando necesites conocer el significado de una métrica, su definición técnica, o el contexto operativo de cualquier concepto utilizado por Rappi.\nEjemplo: si el usuario pregunta “¿qué significa Pro Adoption?” o “¿cuál es el contexto de Lead Penetration?”, debes usar esta herramienta.\n\n➗ calculator\nEmpléala para realizar cálculos sencillos o comparaciones rápidas entre métricas.\n\n📊 crear_documento_ejecutivo\nUtilízala únicamente cuando tengas la autorización explícita del usuario y hayas recopilado toda la información necesaria para elaborar un reporte ejecutivo completo.\n\n⚙️ Límites operativos\n\nSi la consulta implica un gran volumen de datos, limita los resultados a un máximo de 100 registros para obtener una muestra representativa sin comprometer el rendimiento.\n\nSiempre explica los criterios de muestreo o filtrado aplicados en la consulta.\n\n📈 Creación de Reportes Ejecutivos\n\nLos reportes ejecutivos solo deben generarse dentro de una de las siguientes categorías de análisis:\n\nAnomalías:\nZonas con cambios drásticos semana a semana (variación > 10% de mejora o deterioro).\n\nTendencias preocupantes:\nMétricas con deterioro consistente durante 3 o más semanas consecutivas.\n\nBenchmarking:\nComparación entre zonas similares (por país o tipo) con diferencias significativas de rendimiento.\n\nCorrelaciones:\nIdentificación de relaciones entre métricas (por ejemplo: zonas con bajo Lead Penetration y baja Conversion).\n\nOportunidades generales:\nInsights que indiquen posibles mejoras o estrategias de optimización operativa.\n\n🧾 Estructura del Reporte Ejecutivo\n\nCuando generes un reporte ejecutivo, debe incluir las siguientes secciones:\n\nResumen ejecutivo:\nPresenta los 3 a 5 hallazgos más críticos y sus implicaciones operativas.\n\nDetalle por categoría de insight:\nExplica los hallazgos relevantes agrupados según las categorías de análisis.\n\nRecomendaciones accionables:\nOfrece acciones concretas y factibles para cada hallazgo, priorizando impacto y facilidad de implementación.\n\n💬 Estilo de respuesta\n\nComunica siempre en un lenguaje claro, técnico pero accesible para usuarios no expertos.\n\nJustifica las conclusiones basándote en datos y tendencias observadas.\n\nSi la información disponible es insuficiente, solicita datos adicionales antes de emitir conclusiones.\n\nSi el usuario pide definiciones, contexto o interpretación de métricas o conceptos de Rappi, usa la herramienta \"CONTEXTO\"."
+        }
+      },
+      "id": "c240de09-950b-4662-8a66-f19569aac55d",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        784,
+        144
+      ],
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1200,
+        192
+      ],
+      "id": "e8565bfc-1a34-4bc7-a402-b33e5c2ed05f",
+      "name": "When chat message received",
+      "webhookId": "67e539c9-5aeb-4261-9040-fc1cac8af5b0"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2a47d4e2-ee5b-46e6-8af3-019154ff9543",
+              "name": "action",
+              "value": "={{ $json.action }}",
+              "type": "string"
+            },
+            {
+              "id": "d872f1ee-7be3-41b8-860f-46b06343b16c",
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "014b36d9-9754-4778-a8e7-b9b8bdae1684",
+              "name": "message",
+              "value": "={{ $json.chatInput }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -992,
+        192
+      ],
+      "id": "151c261c-279d-43cb-9ac2-cb229a59ed58",
+      "name": "user_data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "25ae3ff7-8070-4671-88f8-100f07ffb950",
+              "name": "concat_message",
+              "type": "string",
+              "value": "={{ $json.message.map(m=>JSON.parse(m).message).join('\\n') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f5d6db95-cef7-448d-abce-8a5412377ff1",
+      "name": "data_to_send",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        352,
+        224
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        960,
+        416
+      ],
+      "id": "36fb2a62-961e-4b30-ad6f-3f58cbbff063",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        656,
+        352
+      ],
+      "id": "71ea20f1-538e-4878-aedc-692df8b33414",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "IIARg3cgltwho7ki",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Llama a  esta herramienta cuando necesite convertir  de lenguaje natural a SQL  y traer la respuesta desde la base de datos con respecto a las metricas",
+        "workflowId": {
+          "__rl": true,
+          "value": "tixaLmNq1YmJqpbw",
+          "mode": "list",
+          "cachedResultName": "Consulta de datos"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', `Instrucción paso a paso en lenguaje natural de la consulta.`, 'string') }}"
+          },
+          "matchingColumns": [
+            "consulta"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        416
+      ],
+      "id": "704c3e38-848a-4d5b-9f27-9648e452d4a3",
+      "name": "consulta_metricas"
+    },
+    {
+      "parameters": {
+        "description": "Llama a  esta herramienta cuando necesite convertir  de lenguaje natural a SQL  y traer la respuesta desde la base de datos con respecto a las ordenes",
+        "workflowId": {
+          "__rl": true,
+          "value": "4vdcEQRBqkoENgEN",
+          "mode": "list",
+          "cachedResultName": "Consulta de  Ordenes"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', `Instrucción paso a paso en lenguaje natural de la consulta.`, 'string') }}"
+          },
+          "matchingColumns": [
+            "consulta"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1216,
+        416
+      ],
+      "id": "8baacb53-7576-4f5e-b9b4-a7543f884bc4",
+      "name": "consulta_ordenes"
+    },
+    {
+      "parameters": {
+        "description": "Llama a esta herramienta una vez tengas todos los requisitos para generar un reporte ejecutivo",
+        "workflowId": {
+          "__rl": true,
+          "value": "fAWZzZ61oPciBz0o",
+          "mode": "list",
+          "cachedResultName": "Reporte ejecutivo"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "report_info": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('report_info', `toda la informaciíon recolectada en lenguaje natural para hacer el reporte`, 'string') }}"
+          },
+          "matchingColumns": [
+            "report_info"
+          ],
+          "schema": [
+            {
+              "id": "report_info",
+              "displayName": "report_info",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1376,
+        416
+      ],
+      "id": "db390ba1-4af5-4b8b-baec-7916c7c8bfc8",
+      "name": "crear_documento_ejecutivo"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "CONTEXTO",
+        "toolDescription": "Usa esta herramienta para el contexto de Rappi o para mirar el segnificado de las metricas",
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "documents",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "id": "6fdba14a-8ad9-49d5-9ed9-ba69d3b0af2d",
+      "name": "CONTEXTO",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "position": [
+        1584,
+        368
+      ],
+      "typeVersion": 1.1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "PMlewvMSiMr4JhIa",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Delete_buffer": {
+      "main": [
+        [
+          {
+            "node": "data_to_send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get_buffer_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete_buffer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_buffer_data": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buffer": {
+      "main": [
+        [
+          {
+            "node": "Get_buffer_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "CONTEXTO",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "user_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "user_data": {
+      "main": [
+        [
+          {
+            "node": "Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data_to_send": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consulta_metricas": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consulta_ordenes": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "crear_documento_ejecutivo": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CONTEXTO": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ac931838-05b4-4ab4-ba2e-2cee00e0fa1e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "076d77bb42b1af4b975afb83adf23c8cb04df51e624a65bb3cb076df9694303c"
+  },
+  "id": "EKTk7LydOAVujDNE",
+  "tags": []
+}
